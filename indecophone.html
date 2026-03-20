@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Indeco Selector</title>
+    <style>
+        :root {
+            --primary-bg: #1a1a1a;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --accent-gold: #fcc201; /* Indeco Branding Yellow/Gold */
+            --hp-red: #d32f2f;
+            --idc-blue: #1976d2;
+            --irp-green: #4caf50;
+            --ihc-orange: #ff9800;
+            --iss-teal: #008080;
+            --imh-olive: #607d8b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: var(--text-main);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* App Header */
+        .app-header {
+            background-color: var(--primary-bg);
+            color: white;
+            padding: 40px 20px 25px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .app-header p {
+            margin: 5px 0 0;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        /* Search Container */
+        .search-container {
+            background: white;
+            margin: -20px 15px 20px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 101;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .search-btn {
+            background-color: var(--primary-bg);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .search-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Results Area */
+        .content {
+            padding: 0 15px 100px;
+        }
+
+        .series-section {
+            margin-bottom: 25px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .series-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            padding-left: 5px;
+            border-left: 4px solid var(--primary-bg);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .model-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Color Coding */
+        .theme-hp { border-left-color: var(--hp-red); color: var(--hp-red); }
+        .theme-idc { border-left-color: var(--idc-blue); color: var(--idc-blue); }
+        .theme-irp { border-left-color: var(--irp-green); color: var(--irp-green); }
+        .theme-ihc { border-left-color: var(--ihc-orange); color: var(--ihc-orange); }
+        .theme-iss { border-left-color: var(--iss-teal); color: var(--iss-teal); }
+        .theme-imh { border-left-color: var(--imh-olive); color: var(--imh-olive); }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 25px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: #eee;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            padding: 10px 5px;
+            border-bottom: 1px solid #f0f0f0;
+            width: 50%;
+        }
+
+        td {
+            padding: 10px 5px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-weight: 500;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1>INDECO SELECTOR</h1>
+    <p>Attachment Finder Tool</p>
+</div>
+
+<div class="search-container">
+    <div class="input-group">
+        <label class="input-label">Carrier Weight (tons)</label>
+        <input type="number" id="weightInput" placeholder="Enter tons (e.g. 20)" step="0.1" inputmode="decimal">
+        <button class="search-btn" onclick="performSearch()">FIND ATTACHMENTS</button>
+    </div>
+</div>
+
+<div class="content" id="resultsArea">
+    <div class="no-results">Enter carrier weight to view compatible Indeco products.</div>
+</div>
+
+<div id="specModal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div>
+                <h2 id="m-name" style="margin:0; font-size:1.5rem;"></h2>
+                <div id="m-series" style="color:#666; font-size:0.9rem;"></div>
+            </div>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+        </div>
+        <table id="specTable"></table>
+    </div>
+</div>
+
+<script>
+const productData = [
+  {"model": "HP 150 FS", "series": "HP Series (Hammers)", "min_weight": 0.7, "max_weight": 3.0, "specs": {"Excavator weight (possible)": "0.7-3 ton ", "Weight of hammer (operated)": "80/98 Kg* ", "Tool diameter": "45 mm ", "Pressure adjusted to excavator": "160 bar ", "Back pressure max": "16 bar ", "Energy class per blow": "230 joule ", "Number of blows per minute": "540-2040 "}},
+  {"model": "HP 200 FS", "series": "HP Series (Hammers)", "min_weight": 1.7, "max_weight": 6.5, "specs": {"Excavator weight (possible)": "1.7-6.5 ton ", "Weight of hammer (operated)": "230 Kg ", "Tool diameter": "48 mm ", "Pressure adjusted to excavator": "160 bar ", "Back pressure max": "11 bar ", "Energy class per blow": "420 joule ", "Number of blows per minute": "620-1500 "}},
+  {"model": "HP 400 FS", "series": "HP Series (Hammers)", "min_weight": 1.4, "max_weight": 5.0, "specs": {"Excavator weight (possible)": "1.4-5 ton ", "Weight of hammer (operated)": "160 Kg ", "Tool diameter": "65 mm ", "Pressure adjusted to excavator": "160 bar ", "Back pressure max": "11 bar ", "Energy class per blow": "500 joule ", "Number of blows per minute": "540-1670 "}},
+  {"model": "HP 550 FS", "series": "HP Series (Hammers)", "min_weight": 3.0, "max_weight": 9.0, "specs": {"Excavator weight (possible)": "3-9 ton ", "Weight of hammer (operated)": "320 Kg ", "Tool diameter": "75 mm ", "Pressure adjusted to excavator": "160 bar ", "Back pressure max": "10 bar ", "Energy class per blow": "650 joule ", "Number of blows per minute": "780-1620 "}},
+  {"model": "HP 600 FS", "series": "HP Series (Hammers)", "min_weight": 3.5, "max_weight": 10.5, "specs": {"Excavator weight (possible)": "3.5-10.5 ton ", "Weight of hammer (operated)": "390 Kg ", "Tool diameter": "75 mm ", "Pressure adjusted to excavator": "170 bar ", "Back pressure max": "10 bar ", "Energy class per blow": "850 joule ", "Number of blows per minute": "600-1340 "}},
+  {"model": "HP 700 FS", "series": "HP Series (Hammers)", "min_weight": 4.0, "max_weight": 12.0, "specs": {"Excavator weight (possible)": "4-12 ton ", "Weight of hammer (operated)": "440 Kg ", "Tool diameter": "80 mm ", "Pressure adjusted to excavator": "170 bar ", "Back pressure max": "10 bar ", "Energy class per blow": "1100 joule ", "Number of blows per minute": "620-1500 "}},
+  {"model": "HP 900 FS", "series": "HP Series (Hammers)", "min_weight": 5.0, "max_weight": 14.0, "specs": {"Excavator weight (possible)": "5-14 ton ", "Weight of hammer (operated)": "550 Kg ", "Tool diameter": "90 mm ", "Pressure adjusted to excavator": "170 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "1250 joule ", "Number of blows per minute": "570-1180 "}},
+  {"model": "HP 1200 FS", "series": "HP Series (Hammers)", "min_weight": 10.0, "max_weight": 20.0, "specs": {"Excavator weight (possible)": "10-20 ton ", "Weight of hammer (operated)": "850 Kg ", "Tool diameter": "110 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "1750 joule ", "Number of blows per minute": "450-980 "}},
+  {"model": "HP 1500 FS", "series": "HP Series (Hammers)", "min_weight": 6.5, "max_weight": 16.0, "specs": {"Excavator weight (possible)": "6.5-16 ton ", "Weight of hammer (operated)": "650 Kg ", "Tool diameter": "90 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "12 bar ", "Energy class per blow": "1500 joule ", "Number of blows per minute": "510-1050 "}},
+  {"model": "HP 1800 FS", "series": "HP Series (Hammers)", "min_weight": 12.0, "max_weight": 22.0, "specs": {"Excavator weight (possible)": "12-22 ton ", "Weight of hammer (operated)": "1000 Kg ", "Tool diameter": "115 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "2250 joule ", "Number of blows per minute": "440-1060 "}},
+  {"model": "HP 2000 FS", "series": "HP Series (Hammers)", "min_weight": 15.0, "max_weight": 25.0, "specs": {"Excavator weight (possible)": "15-25 ton ", "Weight of hammer (operated)": "1200 Kg ", "Tool diameter": "120 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "2500 joule ", "Number of blows per minute": "400-880 "}},
+  {"model": "HP 2500 FS", "series": "HP Series (Hammers)", "min_weight": 16.0, "max_weight": 28.0, "specs": {"Excavator weight (possible)": "16-28 ton ", "Weight of hammer (operated)": "1500 Kg ", "Tool diameter": "130 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "7 bar ", "Energy class per blow": "3100 joule ", "Number of blows per minute": "400-870 "}},
+  {"model": "HP 3000 FS", "series": "HP Series (Hammers)", "min_weight": 19.0, "max_weight": 32.0, "specs": {"Excavator weight (possible)": "19-32 ton ", "Weight of hammer (operated)": "1900 Kg ", "Tool diameter": "140 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "4200 joule ", "Number of blows per minute": "460-940 "}},
+  {"model": "HP 3500 FS", "series": "HP Series (Hammers)", "min_weight": 21.0, "max_weight": 38.0, "specs": {"Excavator weight (possible)": "21-38 ton ", "Weight of hammer (operated)": "2200 Kg ", "Tool diameter": "145 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "4800 joule ", "Number of blows per minute": "370-760 "}},
+  {"model": "HP 4000 FS", "series": "HP Series (Hammers)", "min_weight": 23.0, "max_weight": 42.0, "specs": {"Excavator weight (possible)": "23-42 ton ", "Weight of hammer (operated)": "2500 Kg ", "Tool diameter": "150 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "5600 joule ", "Number of blows per minute": "340-820 "}},
+  {"model": "HP 5000 FS", "series": "HP Series (Hammers)", "min_weight": 27.0, "max_weight": 50.0, "specs": {"Excavator weight (possible)": "27-50 ton ", "Weight of hammer (operated)": "3150 Kg ", "Tool diameter": "160 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "7 bar ", "Energy class per blow": "7200 joule ", "Number of blows per minute": "300-670 "}},
+  {"model": "HP 6000 FS", "series": "HP Series (Hammers)", "min_weight": 30.0, "max_weight": 55.0, "specs": {"Excavator weight (possible)": "30-55 ton ", "Weight of hammer (operated)": "3600 Kg ", "Tool diameter": "170 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "7 bar ", "Energy class per blow": "8500 joule ", "Number of blows per minute": "310-580 "}},
+  {"model": "HP 7000 FS", "series": "HP Series (Hammers)", "min_weight": 32.0, "max_weight": 63.0, "specs": {"Excavator weight (possible)": "32-63 ton ", "Weight of hammer (operated)": "4000 Kg ", "Tool diameter": "180 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "7 bar ", "Energy class per blow": "10500 joule ", "Number of blows per minute": "270-540 "}},
+  {"model": "HP 9000 FS", "series": "HP Series (Hammers)", "min_weight": 39.0, "max_weight": 80.0, "specs": {"Excavator weight (possible)": "39-80 ton ", "Weight of hammer (operated)": "5000 Kg ", "Tool diameter": "195 mm ", "Pressure adjusted to excavator": "180 bar ", "Back pressure max": "6 bar ", "Energy class per blow": "15000 joule ", "Number of blows per minute": "250-500 "}},
+  {"model": "HP 12000 FS", "series": "HP Series (Hammers)", "min_weight": 45.0, "max_weight": 120.0, "specs": {"Excavator weight (possible)": "45-120 ton ", "Weight of hammer (operated)": "7800 Kg ", "Tool diameter": "215 mm ", "Pressure adjusted to excavator": "190 bar ", "Back pressure max": "7 bar ", "Energy class per blow": "20000 joule ", "Number of blows per minute": "210-400 "}},
+  {"model": "HP 18000 FS Plus", "series": "HP Series (Hammers)", "min_weight": 60.0, "max_weight": 140.0, "specs": {"Excavator weight (possible)": "60-140 ton ", "Weight of hammer (operated)": "11050 Kg ", "Tool diameter": "250 mm ", "Pressure adjusted to excavator": "190 bar ", "Back pressure max": "8 bar ", "Energy class per blow": "25000 joule ", "Number of blows per minute": "180-320 "}},
+  {"model": "IDC 11", "series": "IDC Series (Crushers)", "min_weight": 11.0, "max_weight": 17.0, "specs": {"Excavator weight": "11-17 ton", "Operating weight": "900 Kg", "Maximum working pressure": "350 bar", "Maximum oil delivery": "100-200 l/min", "Maximum rotation oil flow": "15 l/min", "Maximum rotation pressure": "110 bar", "Maximum force at tip": "50 ton", "Force class": "330 ton", "Length": "2050 mm", "Jaw opening": "640 mm", "Jaw depth": "580 mm", "Closure time (no-load)": "2.2 s", "Opening time (no-load)": "1.8 s"}},
+  {"model": "IDC 16", "series": "IDC Series (Crushers)", "min_weight": 16.0, "max_weight": 23.0, "specs": {"Excavator weight": "16-23 ton", "Operating weight": "1600 Kg", "Maximum working pressure": "350 bar", "Maximum oil delivery": "150-250 l/min", "Maximum rotation oil flow": "20 l/min", "Maximum rotation pressure": "110 bar", "Maximum force at tip": "75 ton", "Force class": "225 ton", "Length": "1700 mm", "Jaw opening": "850 mm", "Jaw depth": "700 mm", "Closure time (no-load)": "2.4 s", "Opening time (no-load)": "1.9 s"}},
+  {"model": "IDC 21", "series": "IDC Series (Crushers)", "min_weight": 21.0, "max_weight": 35.0, "specs": {"Excavator weight": "21-35 ton", "Operating weight": "2300 Kg", "Maximum working pressure": "350 bar", "Maximum oil delivery": "150-250 l/min", "Maximum rotation oil flow": "30 l/min", "Maximum rotation pressure": "120 bar", "Maximum force at tip": "90 ton", "Force class": "420 ton", "Length": "2350 mm", "Jaw opening": "940 mm", "Jaw depth": "840 mm", "Closure time (no-load)": "2.8 s", "Opening time (no-load)": "2.1 s"}},
+  {"model": "IDC 30", "series": "IDC Series (Crushers)", "min_weight": 30.0, "max_weight": 45.0, "specs": {"Excavator weight": "30-45 ton", "Operating weight": "3000 Kg", "Maximum working pressure": "350 bar", "Maximum oil delivery": "200-300 l/min", "Maximum rotation oil flow": "30 l/min", "Maximum rotation pressure": "120 bar", "Maximum force at tip": "110 ton", "Force class": "630 ton", "Length": "2500 mm", "Jaw opening": "1100 mm", "Jaw depth": "950 mm", "Closure time (no-load)": "3.1 s", "Opening time (no-load)": "2.3 s"}},
+  {"model": "IDC 42", "series": "IDC Series (Crushers)", "min_weight": 42.0, "max_weight": 65.0, "specs": {"Excavator weight": "42-65 ton", "Operating weight": "4400 Kg", "Maximum working pressure": "350 bar", "Maximum oil delivery": "250-350 l/min", "Maximum rotation oil flow": "40 l/min", "Maximum rotation pressure": "120 bar", "Maximum force at tip": "135 ton", "Force class": "495 ton", "Length": "2850 mm", "Jaw opening": "1250 mm", "Jaw depth": "1100 mm", "Closure time (no-load)": "3.6 s", "Opening time (no-load)": "2.6 s"}},
+  {"model": "IDC 70", "series": "IDC Series (Crushers)", "min_weight": 70.0, "max_weight": 120.0, "specs": {"Excavator weight": "70-120 ton", "Operating weight": "7200 Kg", "Maximum working pressure": "350 bar", "Maximum oil delivery": "300-550 l/min", "Maximum rotation oil flow": "50 l/min", "Maximum rotation pressure": "150 bar", "Maximum force at tip": "180 ton", "Force class": "800 ton", "Length": "3450 mm", "Jaw opening": "1600 mm", "Jaw depth": "1250 mm", "Closure time (no-load)": "4.2 s", "Opening time (no-load)": "3.2 s"}},
+  {"model": "IHC R 50", "series": "IHC Compaction Plates", "min_weight": 3.5, "max_weight": 13.0, "specs": {"Excavator Weight": "3.5 – 13 ton ", "Equipment Weight": "425 Kg ", "Height": "88 cm ", "Baseplate Size": "30.5 x 76 cm ", "Centrifugal Force": "3000 Kg / 29.5 KN ", "Compacting Force (Min-Med-Max)": "0.8 / 1.2 / 1.7 Kg/cm² ", "Frequency (Min-Med-Max)": "2000 / 2500 / 3000 rpm", "Oil Flow": "60 l/min ", "Max Pressure": "200 bar ", "Max Back Pressure": "10 bar "}},
+  {"model": "IHC R 70", "series": "IHC Compaction Plates", "min_weight": 6.5, "max_weight": 16.0, "specs": {"Excavator Weight": "6.5 – 16 ton ", "Equipment Weight": "630 Kg ", "Height": "93 cm ", "Baseplate Size": "46 x 84 cm ", "Centrifugal Force": "4000 Kg / 39 KN ", "Compacting Force (Min-Med-Max)": "0.9 / 1.1 / 1.4 Kg/cm² ", "Frequency (Min-Med-Max)": "2000 / 2500 / 3000 rpm", "Oil Flow": "75 l/min ", "Max Pressure": "200 bar ", "Max Back Pressure": "10 bar "}},
+  {"model": "IHC R 75", "series": "IHC Compaction Plates", "min_weight": 7.0, "max_weight": 16.0, "specs": {"Excavator Weight": "7 – 16 ton ", "Equipment Weight": "670 Kg ", "Height": "93 cm ", "Baseplate Size": "64 x 87 cm ", "Centrifugal Force": "4000 Kg / 39 KN ", "Compacting Force (Min-Med-Max)": "0.7 / 0.9 / 1.1 Kg/cm² ", "Frequency (Min-Med-Max)": "2000 / 2500 / 3000 rpm", "Oil Flow": "75 l/min ", "Max Pressure": "200 bar ", "Max Back Pressure": "10 bar "}},
+  {"model": "IHC R 150", "series": "IHC Compaction Plates", "min_weight": 15.0, "max_weight": 25.0, "specs": {"Excavator Weight": "15 – 25 ton ", "Equipment Weight": "1185 Kg ", "Height": "108 cm ", "Baseplate Size": "71 x 120 cm ", "Centrifugal Force": "10000 Kg / 98 KN ", "Compacting Force (Min-Med-Max)": "1.4 / 1.6 / 1.8 Kg/cm² ", "Frequency (Min-Med-Max)": "2000 / 2500 / 3000 rpm", "Oil Flow": "120 l/min ", "Max Pressure": "200 bar ", "Max Back Pressure": "10 bar "}},
+  {"model": "IHC R 250", "series": "IHC Compaction Plates", "min_weight": 16.0, "max_weight": 45.0, "specs": {"Excavator Weight": "16 – 45 ton ", "Equipment Weight": "1520 Kg ", "Height": "110 cm ", "Baseplate Size": "90 x 122 cm ", "Centrifugal Force": "17000 Kg / 167 KN ", "Compacting Force (Min-Med-Max)": "1.3 / 1.7 / 2.2 Kg/cm² ", "Frequency (Min-Med-Max)": "2000 / 2500 / 3000 rpm", "Oil Flow": "150 l/min ", "Max Pressure": "200 bar ", "Max Back Pressure": "10 bar "}},
+  {"model": "IFP 8 X", "series": "IFP Fixed Pulveriser", "min_weight": 6.0, "max_weight": 18.0, "specs": {"Excavator weight": "6-18 ton ", "Attachment operating weight*": "750 Kg ", "Max opening": "650 mm ", "Height": "1700 mm ", "Width": "980 mm ", "Jaw width": "345 mm ", "Oil delivery": "80-200 l/min ", "Maximum working pressure": "350 bar ", "Clamping force at tip": "50 ton ", "Clamping force at throat": "180 ton ", "Closing time (no-load)": "1,8 s ", "Opening time (no-load)": "1,1 s "}},
+  {"model": "IFP 13 X", "series": "IFP Fixed Pulveriser", "min_weight": 10.0, "max_weight": 21.0, "specs": {"Excavator weight": "10-21 ton ", "Attachment operating weight*": "1300 Kg ", "Max opening": "810 mm ", "Height": "1900 mm ", "Width": "1190 mm ", "Jaw width": "400 mm ", "Oil delivery": "120-200 l/min ", "Maximum working pressure": "350 bar ", "Clamping force at tip": "65 ton ", "Clamping force at throat": "210 ton ", "Closing time (no-load)": "2,2 s ", "Opening time (no-load)": "1,3 s "}},
+  {"model": "IFP 19 X", "series": "IFP Fixed Pulveriser", "min_weight": 16.0, "max_weight": 30.0, "specs": {"Excavator weight": "16-30 ton ", "Attachment operating weight*": "1800 Kg ", "Max opening": "900 mm ", "Height": "2100 mm ", "Width": "1470 mm ", "Jaw width": "450 mm ", "Oil delivery": "140-220 l/min ", "Maximum working pressure": "350 bar ", "Clamping force at tip": "80 ton ", "Clamping force at throat": "270 ton ", "Closing time (no-load)": "2,4 s ", "Opening time (no-load)": "1,4 s "}},
+  {"model": "IFP 28 X", "series": "IFP Fixed Pulveriser", "min_weight": 20.0, "max_weight": 45.0, "specs": {"Excavator weight": "20-45 ton ", "Attachment operating weight*": "2800 Kg ", "Max opening": "1000 mm ", "Height": "2440 mm ", "Width": "1540 mm ", "Jaw width": "520 mm ", "Oil delivery": "150-250 l/min ", "Maximum working pressure": "350 bar ", "Clamping force at tip": "100 ton ", "Clamping force at throat": "350 ton ", "Closing time (no-load)": "2,8 s ", "Opening time (no-load)": "1,6 s "}},
+  {"model": "IFP 35 X", "series": "IFP Fixed Pulveriser", "min_weight": 28.0, "max_weight": 35.0, "specs": {"Excavator weight": "28-35 ton ", "Attachment operating weight*": "3450 Kg ", "Max opening": "1190 mm ", "Height": "2590 mm ", "Width": "1630 mm ", "Jaw width": "560 mm ", "Oil delivery": "180-260 l/min ", "Maximum working pressure": "350 bar ", "Clamping force at tip": "115 ton ", "Clamping force at throat": "410 ton ", "Closing time (no-load)": "3,4 s ", "Opening time (no-load)": "2,0 s "}},
+  {"model": "IFP 45 X", "series": "IFP Fixed Pulveriser", "min_weight": 33.0, "max_weight": 65.0, "specs": {"Excavator weight": "33-65 ton ", "Attachment operating weight*": "4550 Kg ", "Max opening": "1290 mm ", "Height": "3100 mm ", "Width": "1900 mm ", "Jaw width": "600 mm ", "Oil delivery": "180-300 l/min ", "Maximum working pressure": "350 bar ", "Clamping force at tip": "135 ton ", "Clamping force at throat": "480 ton ", "Closing time (no-load)": "3,8 s ", "Opening time (no-load)": "2,2 s "}},
+  {"model": "IRP 5 X", "series": "IRP Rotating Pulveriser", "min_weight": 5.0, "max_weight": 12.0, "specs": {"Excavator weight (ton)": "5-12 ton", "Equipment weight (kg)": "570", "Max opening (mm)": "425", "Width (mm)": "340", "Shear force at tip (tons)": "35", "Shear force at throat (tons)": "115", "Max working pressure (bar)": "350", "Oil flow (l/min)": "40 \\ 80", "Closing time (sec)": "2,2", "Opening time (sec)": "1,4"}},
+  {"model": "IRP 11 X", "series": "IRP Rotating Pulveriser", "min_weight": 10.0, "max_weight": 18.0, "specs": {"Excavator weight (ton)": "10-18 ton", "Equipment weight (kg)": "1150", "Max opening (mm)": "600", "Width (mm)": "410", "Shear force at tip (tons)": "45", "Shear force at throat (tons)": "155", "Max working pressure (bar)": "350", "Oil flow (l/min)": "80 \\ 150", "Closing time (sec)": "2,6", "Opening time (sec)": "1,6"}},
+  {"model": "IRP 18 X", "series": "IRP Rotating Pulveriser", "min_weight": 16.0, "max_weight": 25.0, "specs": {"Excavator weight (ton)": "16-25 ton", "Equipment weight (kg)": "1700", "Max opening (mm)": "750", "Width (mm)": "490", "Shear force at tip (tons)": "65", "Shear force at throat (tons)": "215", "Max working pressure (bar)": "350", "Oil flow (l/min)": "150 \\ 250", "Closing time (sec)": "2,8", "Opening time (sec)": "1,8"}},
+  {"model": "IRP 23 X", "series": "IRP Rotating Pulveriser", "min_weight": 20.0, "max_weight": 30.0, "specs": {"Excavator weight (ton)": "20-30 ton", "Equipment weight (kg)": "2300", "Max opening (mm)": "830", "Width (mm)": "540", "Shear force at tip (tons)": "80", "Shear force at throat (tons)": "250", "Max working pressure (bar)": "350", "Oil flow (l/min)": "180 \\ 280", "Closing time (sec)": "3,2", "Opening time (sec)": "2,2"}},
+  {"model": "IRP 29 X", "series": "IRP Rotating Pulveriser", "min_weight": 25.0, "max_weight": 40.0, "specs": {"Excavator weight (ton)": "25-40 ton", "Equipment weight (kg)": "2950", "Max opening (mm)": "940", "Width (mm)": "580", "Shear force at tip (tons)": "95", "Shear force at throat (tons)": "315", "Max working pressure (bar)": "350", "Oil flow (l/min)": "200 \\ 300", "Closing time (sec)": "3,4", "Opening time (sec)": "2,4"}},
+  {"model": "IRP 36 X", "series": "IRP Rotating Pulveriser", "min_weight": 32.0, "max_weight": 50.0, "specs": {"Excavator weight (ton)": "32-50 ton", "Equipment weight (kg)": "3600", "Max opening (mm)": "1050", "Width (mm)": "650", "Shear force at tip (tons)": "110", "Shear force at throat (tons)": "390", "Max working pressure (bar)": "350", "Oil flow (l/min)": "250 \\ 350", "Closing time (sec)": "3,8", "Opening time (sec)": "2,6"}},
+  {"model": "IRP 45 X", "series": "IRP Rotating Pulveriser", "min_weight": 38.0, "max_weight": 65.0, "specs": {"Excavator weight (ton)": "38-65 ton", "Equipment weight (kg)": "4500", "Max opening (mm)": "1150", "Width (mm)": "720", "Shear force at tip (tons)": "140", "Shear force at throat (tons)": "460", "Max working pressure (bar)": "350", "Oil flow (l/min)": "300 \\ 450", "Closing time (sec)": "4,2", "Opening time (sec)": "3,2"}},
+  {"model": "ISS 5/7", "series": "ISS Shears", "min_weight": 4.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "4 ton ", "Min. Carrier Weight (2nd Member)": "5 ton ", "Min. Carrier Weight (3rd Member)": "7 ton ", "Operating Weight (Fixed)": "480 Kg ", "Max Working Pressure": "300/220 bar ", "Oil Delivery (l/min)": "50-120 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "10 ", "Clamping Force (tons)": "190 ", "Max Jaw Opening (mm)": "260 ", "Jaw Depth (mm)": "310 ", "Total Length (mm)": "1650 "}},
+  {"model": "ISS 8/13", "series": "ISS Shears", "min_weight": 6.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "6 ton ", "Min. Carrier Weight (2nd Member)": "8 ton ", "Min. Carrier Weight (3rd Member)": "13 ton ", "Operating Weight (Fixed)": "1050 Kg ", "Max Working Pressure": "350 bar ", "Oil Delivery (l/min)": "90-180 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "15 ", "Clamping Force (tons)": "300 ", "Max Jaw Opening (mm)": "380 ", "Jaw Depth (mm)": "390 ", "Total Length (mm)": "2010 "}},
+  {"model": "ISS 10/20", "series": "ISS Shears", "min_weight": 8.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "8 ton ", "Min. Carrier Weight (2nd Member)": "10 ton ", "Min. Carrier Weight (3rd Member)": "20 ton ", "Operating Weight (Fixed)": "2000 Kg ", "Max Working Pressure": "350 bar ", "Oil Delivery (l/min)": "100-200 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "15 ", "Clamping Force (tons)": "410 ", "Max Jaw Opening (mm)": "430 ", "Jaw Depth (mm)": "480 ", "Total Length (mm)": "2650 "}},
+  {"model": "ISS 20/30", "series": "ISS Shears", "min_weight": 18.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "18 ton ", "Min. Carrier Weight (2nd Member)": "20 ton ", "Min. Carrier Weight (3rd Member)": "30 ton ", "Operating Weight (Fixed)": "3250 Kg ", "Max Working Pressure": "350 bar ", "Oil Delivery (l/min)": "200-300 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "25 ", "Clamping Force (tons)": "515 ", "Max Jaw Opening (mm)": "550 ", "Jaw Depth (mm)": "570 ", "Total Length (mm)": "3400 "}},
+  {"model": "ISS 25/40", "series": "ISS Shears", "min_weight": 23.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "23 ton ", "Min. Carrier Weight (2nd Member)": "25 ton ", "Min. Carrier Weight (3rd Member)": "40 ton ", "Operating Weight (Fixed)": "4500 Kg ", "Max Working Pressure": "350 bar ", "Oil Delivery (l/min)": "220-360 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "40 ", "Clamping Force (tons)": "620 ", "Max Jaw Opening (mm)": "620 ", "Jaw Depth (mm)": "640 ", "Total Length (mm)": "3750 "}},
+  {"model": "ISS 30/50", "series": "ISS Shears", "min_weight": 27.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "27 ton ", "Min. Carrier Weight (2nd Member)": "30 ton ", "Min. Carrier Weight (3rd Member)": "50 ton ", "Operating Weight (Fixed)": "5600 Kg ", "Max Working Pressure": "350 bar ", "Oil Delivery (l/min)": "240-400 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "40 ", "Clamping Force (tons)": "710 ", "Max Jaw Opening (mm)": "680 ", "Jaw Depth (mm)": "710 ", "Total Length (mm)": "4150 "}},
+  {"model": "ISS 35/60", "series": "ISS Shears", "min_weight": 33.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "33 ton ", "Min. Carrier Weight (2nd Member)": "35 ton ", "Min. Carrier Weight (3rd Member)": "60 ton ", "Operating Weight (Fixed)": "6800 Kg ", "Max Working Pressure": "350 bar ", "Oil Delivery (l/min)": "300-550 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "50 ", "Clamping Force (tons)": "850 ", "Max Jaw Opening (mm)": "760 ", "Jaw Depth (mm)": "780 ", "Total Length (mm)": "4450 "}},
+  {"model": "ISS 45/90", "series": "ISS Shears", "min_weight": 42.0, "max_weight": 9999.0, "specs": {"Min. Carrier Weight (Fixed)": "42 ton ", "Min. Carrier Weight (2nd Member)": "45 ton ", "Min. Carrier Weight (90 ton Member)": "90 ton ", "Operating Weight (Fixed)": "9700 Kg ", "Max Working Pressure": "350 bar ", "Oil Delivery (l/min)": "360-700 ", "Max Rotation Pressure": "110 bar ", "Rotation Oil Flow (l/min)": "60 ", "Clamping Force (tons)": "1100 ", "Max Jaw Opening (mm)": "860 ", "Jaw Depth (mm)": "880 ", "Total Length (mm)": "5200 "}},
+  {"model": "IMH 3", "series": "IMH Mulching heads", "min_weight": 3.0, "max_weight": 5.0, "specs": {"carrier weight": "3-5 ton", "Cutting width": "765 mm ", "GPM range (l/min)": "65-95 ", "Optimal oil supply": "55 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 4", "series": "IMH Mulching heads", "min_weight": 4.0, "max_weight": 6.0, "specs": {"carrier weight": "4-6 ton", "Cutting width": "610 mm ", "GPM range (l/min)": "45-60 ", "Optimal oil supply": "75 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 5", "series": "IMH Mulching heads", "min_weight": 5.0, "max_weight": 8.0, "specs": {"carrier weight": "5-8 ton", "Cutting width": "610 mm ", "GPM range (l/min)": "65-95 ", "Optimal oil supply": "75 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 6", "series": "IMH Mulching heads", "min_weight": 6.0, "max_weight": 9.0, "specs": {"carrier weight": "6-9 ton", "Cutting width": "765 mm ", "GPM range (l/min)": "90-110 ", "Optimal oil supply": "95 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 8", "series": "IMH Mulching heads", "min_weight": 8.0, "max_weight": 12.0, "specs": {"carrier weight": "8-12 ton", "Cutting width": "765 mm ", "GPM range (l/min)": "90-120 ", "Optimal oil supply": "105 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 10", "series": "IMH Mulching heads", "min_weight": 9.0, "max_weight": 16.0, "specs": {"carrier weight": "9-16 ton", "Cutting width": "915 mm ", "GPM range (l/min)": "90-120 ", "Optimal oil supply": "105 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 14", "series": "IMH Mulching heads", "min_weight": 14.0, "max_weight": 18.0, "specs": {"carrier weight": "14-18 ton", "Cutting width": "1120 mm ", "GPM range (l/min)": "110-150 ", "Optimal oil supply": "135 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 20", "series": "IMH Mulching heads", "min_weight": 20.0, "max_weight": 36.0, "specs": {"carrier weight": "20-36 ton", "Cutting width": "1065 mm ", "GPM range (l/min)": "170-245 ", "Optimal oil supply": "210 l/min ", "Optimal pressure": "300 bar ", "Hoses connection": "1\" - 1\" "}},
+  {"model": "IMH 30", "series": "IMH Mulching heads", "min_weight": 29.0, "max_weight": 49.0, "specs": {"carrier weight": "29-49 ton", "Cutting width": "1270 mm ", "GPM range (l/min)": "210-305 ", "Optimal oil supply": "245 l/min ", "Optimal pressure": "300 bar ", "Hoses connection": "1\" - 1\" "}},
+  {"model": "IMH 3.2 SS", "series": "IMH Mulching heads", "min_weight": 3.2, "max_weight": 6.0, "specs": {"carrier weight": "3.2-6 ton", "Cutting width": "1270 mm ", "GPM range (l/min)": "105-150 ", "Optimal oil supply": "125 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 4.2 SS", "series": "IMH Mulching heads", "min_weight": 4.2, "max_weight": 6.0, "specs": {"carrier weight": "4.2-6 ton", "Cutting width": "1450 mm ", "GPM range (l/min)": "105-150 ", "Optimal oil supply": "125 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "1/2\" - 1/2\" "}},
+  {"model": "IMH 5.2 SS", "series": "IMH Mulching heads", "min_weight": 4.2, "max_weight": 6.0, "specs": {"carrier weight": "4.2 6 ton", "Cutting width": "1830 mm ", "GPM range (l/min)": "110-185 ", "Optimal oil supply": "155 l/min ", "Optimal pressure": "250 bar ", "Hoses connection": "3/4\" - 3/4\" "}},
+  {"model": "IMP 15", "series": "IMP Series (Multi-Processors)", "min_weight": 12.0, "max_weight": 24.0, "specs": {"Excavator weight": "12-24 ton", "Operating weight": "1500 Kg", "Width": "425 mm", "Oil delivery": "150-250 l/min", "Maximum pressure at cylinders": "350 bar", "Closure time (no-load)": "2s", "Opening time (no-load)": "1s", "Hydraulic connections (cylinders)": "3/4\"", "Maximum rotation flow": "20 l/min", "Maximum rotation pressure": "110 bar", "Hydraulic connections (rotation)": "1/2\""}},
+  {"model": "IMP 20", "series": "IMP Series (Multi-Processors)", "min_weight": 17.0, "max_weight": 36.0, "specs": {"Excavator weight": "17-36 ton", "Operating weight": "2000 Kg", "Width": "475 mm", "Oil delivery": "180-250 l/min", "Maximum pressure at cylinders": "350 bar", "Closure time (no-load)": "2.5s", "Opening time (no-load)": "1.2s", "Hydraulic connections (cylinders)": "3/4\"", "Maximum rotation flow": "25 l/min", "Maximum rotation pressure": "110 bar", "Hydraulic connections (rotation)": "1/2\""}},
+  {"model": "IMP 25", "series": "IMP Series (Multi-Processors)", "min_weight": 20.0, "max_weight": 45.0, "specs": {"Excavator weight": "20-45 ton", "Operating weight": "2400 Kg", "Width": "495 mm", "Oil delivery": "200-300 l/min", "Maximum pressure at cylinders": "350 bar", "Closure time (no-load)": "3s", "Opening time (no-load)": "1.5s", "Hydraulic connections (cylinders)": "3/4\"", "Maximum rotation flow": "25 l/min", "Maximum rotation pressure": "110 bar", "Hydraulic connections (rotation)": "1/2\""}},
+  {"model": "IMP 35", "series": "IMP Series (Multi-Processors)", "min_weight": 28.0, "max_weight": 55.0, "specs": {"Excavator weight": "28-55 ton", "Operating weight": "3500 Kg", "Width": "590 mm", "Oil delivery": "220-320 l/min", "Maximum pressure at cylinders": "350 bar", "Closure time (no-load)": "4s", "Opening time (no-load)": "2s", "Hydraulic connections (cylinders)": "1 1/4\"", "Maximum rotation flow": "30 l/min", "Maximum rotation pressure": "110 bar", "Hydraulic connections (rotation)": "1/2\""}},
+  {"model": "IMP 45", "series": "IMP Series (Multi-Processors)", "min_weight": 38.0, "max_weight": 65.0, "specs": {"Excavator weight": "38-65 ton", "Operating weight": "4500 Kg", "Width": "640 mm", "Oil delivery": "270-370 l/min", "Maximum pressure at cylinders": "350 bar", "Closure time (no-load)": "4s", "Opening time (no-load)": "2s", "Hydraulic connections (cylinders)": "1 1/4\"", "Maximum rotation flow": "30 l/min", "Maximum rotation pressure": "110 bar", "Hydraulic connections (rotation)": "1/2\""}}
+];
+
+function getTheme(series) {
+    const s = series.toUpperCase();
+    if (s.includes("HAMMERS")) return "theme-hp";
+    if (s.includes("IDC") || s.includes("IMP")) return "theme-idc";
+    if (s.includes("IRP") || s.includes("IFP")) return "theme-irp";
+    if (s.includes("IHC") || s.includes("COMPACTION")) return "theme-ihc";
+    if (s.includes("ISS") || s.includes("SHEAR")) return "theme-iss";
+    if (s.includes("IMH") || s.includes("MULCHING")) return "theme-imh";
+    return "";
+}
+
+function performSearch() {
+    const val = document.getElementById('weightInput').value;
+    const out = document.getElementById('resultsArea');
+    out.innerHTML = '';
+
+    if (!val) {
+        out.innerHTML = '<div class="no-results">Please enter a weight.</div>';
+        return;
+    }
+
+    const weight = parseFloat(val);
+    const filtered = productData.filter(p => weight >= p.min_weight && weight <= p.max_weight);
+
+    if (filtered.length === 0) {
+        out.innerHTML = '<div class="no-results">No compatible attachments found for ' + weight + ' tons.</div>';
+        return;
+    }
+
+    const groups = {};
+    filtered.forEach(p => {
+        if (!groups[p.series]) groups[p.series] = [];
+        groups[p.series].push(p);
+    });
+
+    for (const sName in groups) {
+        const theme = getTheme(sName);
+        const sec = document.createElement('div');
+        sec.className = 'series-section';
+        
+        const title = document.createElement('div');
+        title.className = `series-title ${theme}`;
+        title.innerText = sName;
+        sec.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        groups[sName].forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'model-card';
+            card.innerText = p.model;
+            card.onclick = () => openModal(p);
+            grid.appendChild(card);
+        });
+
+        sec.appendChild(grid);
+        out.appendChild(sec);
+    }
+}
+
+function openModal(p) {
+    document.getElementById('m-name').innerText = p.model;
+    document.getElementById('m-series').innerText = p.series;
+    const table = document.getElementById('specTable');
+    table.innerHTML = '';
+
+    for (const k in p.specs) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<th>${k}</th><td>${p.specs[k]}</td>`;
+        table.appendChild(tr);
+    }
+
+    document.getElementById('specModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('specModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Allow "Enter" key to trigger search
+document.getElementById('weightInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') performSearch();
+});
+</script>
+
+</body>
+</html>
