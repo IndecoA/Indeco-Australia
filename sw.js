@@ -1,8 +1,9 @@
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open('indeco-v1').then((cache) => cache.addAll([
-      'index.html',
-      'manifest.json'
+    caches.open('indeco-store').then((cache) => cache.addAll([
+      '/',
+      '/index.html',
+      '/manifest.json'
     ]))
   );
 });
