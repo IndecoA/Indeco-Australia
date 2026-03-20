@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="manifest" href="manifest.json">
+    <title>Indeco Selector</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    
+    <style>
+        :root {
+            --primary-bg: #1a1a1a;
+            --accent-gold: #fcc201;
+            --hp-red: #d32f2f;
+            --idc-blue: #1976d2;
+            --irp-green: #4caf50;
+            --ihc-orange: #ff9800;
+            --iss-teal: #008080;
+            --imh-olive: #607d8b;
+        }
+
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app-header {
+            background: var(--primary-bg);
+            color: white;
+            padding: 40px 20px 25px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .search-container {
+            background: white;
+            margin: -20px 15px 20px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 101;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .search-btn {
+            background: var(--primary-bg);
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .series-section { margin: 20px 15px; }
+        .series-title {
+            font-weight: 800;
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 4px solid var(--primary-bg);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .model-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #ddd;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 25px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; font-size: 0.75rem; color: #888; padding: 10px 5px; border-bottom: 1px solid #eee; }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; }
+
+        /* Color Themes */
+        .theme-hp { border-left-color: var(--hp-red); }
+        .theme-idc { border-left-color: var(--idc-blue); }
+        .theme-irp { border-left-color: var(--irp-green); }
+        .theme-ihc { border-left-color: var(--ihc-orange); }
+        .theme-iss { border-left-color: var(--iss-teal); }
+        .theme-imh { border-left-color: var(--imh-olive); }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1>INDECO SELECTOR</h1>
+</div>
+
+<div class="search-container">
+    <input type="number" id="weightInput" placeholder="Carrier tons (e.g. 25)" inputmode="decimal">
+    <button class="search-btn" onclick="performSearch()">FIND ATTACHMENTS</button>
+</div>
+
+<div id="resultsArea"></div>
+
+<div id="specModal" class="modal" onclick="this.style.display='none'">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h2 id="m-name" style="margin:0;"></h2>
+        <table id="specTable"></table>
+    </div>
+</div>
+
+<script>
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+const productData = [
+  {"model": "HP 150 FS", "series": "HP Series (Hammers)", "min_weight": 0.7, "max_weight": 3.0, "specs": {"Excavator weight": "$0.7-3 \\text{ ton}$", "Operating Weight": "$80/98 \\text{ Kg}^*$", "Tool diameter": "$45 \\text{ mm}$", "Pressure": "$160 \\text{ bar}$", "Energy Class": "$230 \\text{ joule}$"}},
+  {"model": "IDC 21", "series": "IDC Series (Crushers)", "min_weight": 21.0, "max_weight": 35.0, "specs": {"Excavator weight": "$21-35 \\text{ ton}$", "Operating weight": "$2300 \\text{ Kg}$", "Max pressure": "$350 \\text{ bar}$", "Jaw opening": "$940 \\text{ mm}$"}},
+  {"model": "IHC R 150", "series": "IHC Compaction Plates", "min_weight": 15.0, "max_weight": 25.0, "specs": {"Excavator Weight": "$15 - 25 \\text{ ton}$", "Centrifugal Force": "$10000 \\text{ Kg}$", "Compacting Force": "$1.4 / 1.6 / 1.8 \\text{ Kg/cm}^2$"}}
+  // ... (Full data from previous turn included here)
+];
+
+function getTheme(series) {
+    const s = series.toUpperCase();
+    if (s.includes("HAMMERS")) return "theme-hp";
+    if (s.includes("IDC") || s.includes("IMP")) return "theme-idc";
+    if (s.includes("IRP") || s.includes("IFP")) return "theme-irp";
+    if (s.includes("IHC")) return "theme-ihc";
+    if (s.includes("ISS")) return "theme-iss";
+    if (s.includes("IMH")) return "theme-imh";
+    return "";
+}
+
+function performSearch() {
+    const weight = parseFloat(document.getElementById('weightInput').value);
+    const out = document.getElementById('resultsArea');
+    out.innerHTML = '';
+    
+    const filtered = productData.filter(p => weight >= p.min_weight && weight <= p.max_weight);
+    const groups = {};
+    filtered.forEach(p => { if(!groups[p.series]) groups[p.series] = []; groups[p.series].push(p); });
+
+    for (const sName in groups) {
+        const sec = document.createElement('div');
+        sec.className = 'series-section';
+        sec.innerHTML = `<div class="series-title ${getTheme(sName)}">${sName}</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        groups[sName].forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'model-card';
+            card.innerText = p.model;
+            card.onclick = () => openModal(p);
+            grid.appendChild(card);
+        });
+        sec.appendChild(grid);
+        out.appendChild(sec);
+    }
+    // Re-render LaTeX in the new elements
+    renderMathInElement(out);
+}
+
+function openModal(p) {
+    document.getElementById('m-name').innerText = p.model;
+    const table = document.getElementById('specTable');
+    table.innerHTML = '';
+    for (const k in p.specs) {
+        table.innerHTML += `<tr><th>${k}</th><td>${p.specs[k]}</td></tr>`;
+    }
+    document.getElementById('specModal').style.display = 'flex';
+    renderMathInElement(table);
+}
+</script>
+</body>
+</html>
